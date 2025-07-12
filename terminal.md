@@ -12,3 +12,4 @@ tunneling
 ```
 ssh -i "key_pair" -N -L 3306:<rds end_point>:3306 ubuntu@<public_ip>
 ```
+

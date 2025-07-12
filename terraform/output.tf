@@ -1,25 +1,31 @@
 output "vpc_id" {
-  value = module.vpc.vpc_id
+  description = "ID of the VPC"
+  value       = module.vpc.vpc_id
 }
 
 output "public_subnet_ids" {
-  value = module.public_subnet.subnet_ids # Changed from public_subnets to public_subnet
+  description = "IDs of the public subnets"
+  value       = module.public_subnet.subnet_ids
 }
 
 output "private_subnet_ids" {
-  value = module.private_subnet.subnet_ids # Changed from private_subnets to private_subnet
+  description = "IDs of the private subnets"
+  value       = module.private_subnet.subnet_ids
 }
 
 output "igw_id" {
-  value = module.igw.igw_id
+  description = "ID of the Internet Gateway"
+  value       = module.igw.igw_id
 }
 
 output "public_route_table_id" {
-  value = module.public_route_table.route_table_id
+  description = "ID of the public route table"
+  value       = module.public_route_table.route_table_id
 }
 
 output "public_route_table_arn" {
-  value = module.public_route_table.route_table_arn
+  description = "ARN of the public route table"
+  value       = module.public_route_table.route_table_arn
 }
 
 output "instance_id" {

@@ -7,7 +7,7 @@ resource "random_string" "username" {
 resource "random_password" "password" {
   length           = 16
   special          = true
-  override_special = "!_$&/"
+  override_special = "@/"
 }
 
 resource "aws_ssm_parameter" "name" {

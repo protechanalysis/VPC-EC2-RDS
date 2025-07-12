@@ -26,6 +26,7 @@ resource "aws_instance" "web-test" {
   vpc_security_group_ids = var.security_group_id
   key_name = data.aws_key_pair.manual_key_pair.key_name
   user_data = var.user_data
+  user_data_replace_on_change = true
 
   tags = {
       Name = var.name

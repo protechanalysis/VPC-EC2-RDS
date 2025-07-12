@@ -63,11 +63,19 @@ This folder contains the Terraform code for provisioning a secure, highly-availa
    ```
    terraform init
    ```
-2. **Plan the deployment**
+2. **format the argument**
+   ```
+   terraform fmt
+   ```
+3. **validate the argument**
+   ```
+   terraform validate
+   ```
+4. **plan the deployment**
    ```
    terraform plan
    ```
-3. **Apply the configuration**
+5. **Apply the configuration**
    ```
    terraform apply
    ```
