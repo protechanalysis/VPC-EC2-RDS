@@ -3,7 +3,7 @@
 ## Architecture Diagram
 The following diagram illustrates the overall AWS infrastructure provisioned by this Terraform project:
 
-![AWS Architecture Diagram](./asset/vpc_ec2_rds.png)
+![AWS Architecture Diagram](./asset/Architecture.png)
 
 This diagram shows the relationships between the VPC, subnets, route tables, security groups, EC2 webserver host, and RDS instance, providing a visual overview of the deployed resources.
 
