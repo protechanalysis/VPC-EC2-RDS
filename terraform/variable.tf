@@ -13,6 +13,11 @@ variable "region" {
   description = "AWS region where resources will be created"
 }
 
+variable "keypair" {
+  type        = string
+  description = "Name of the SSH key pair to use for EC2 instances"
+}
+
 variable "allowed_cidr_blocks" {
   type        = string
   description = "CIDR blocks allowed for security group rules"

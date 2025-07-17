@@ -15,7 +15,7 @@ data "aws_ami" "ubuntu" {
 }
 
 data "aws_key_pair" "manual_key_pair" {
-  key_name = "ec2_test_key" 
+  key_name = var.key_pair
 }
 
 resource "aws_instance" "web-test" {

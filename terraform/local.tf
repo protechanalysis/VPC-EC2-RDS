@@ -26,6 +26,7 @@ locals {
   name                = var.name
   region              = var.region
   allowed_cidr_blocks = var.allowed_cidr_blocks
+  key_name            = var.keypair
 
   # Common tags to be applied to all resources
   common_tags = {

@@ -155,6 +155,7 @@ module "ec2_instance" {
   vpc_id                  = module.vpc.vpc_id
   public_subnet_id        = module.public_subnet.subnet_ids["public-1"]
   instance_profile_name   = module.role.instance_profile_name
+  key_pair                = local.key_name
   security_group_id       = [module.public_security_group.id]
   ssh_allowed_cidr_blocks = [local.allowed_cidr_blocks]
   user_data               = file("${path.module}/modules/instance/scripts/bootstraps.sh")

@@ -13,10 +13,10 @@ variable "vpc_id" {
   type        = string
 }
 
-# variable "key_name" {
-#   description = "Name of the SSH key pair"
-#   type        = string
-# }
+variable "key_pair" {
+  description = "Name of the SSH key pair"
+  type        = string
+}
 
 variable "ssh_allowed_cidr_blocks" {
   description = "List of CIDR blocks allowed to SSH into the instance"
