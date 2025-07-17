@@ -24,11 +24,10 @@ resource "aws_instance" "web-test" {
   subnet_id = var.public_subnet_id
   associate_public_ip_address = true
   vpc_security_group_ids = var.security_group_id
+  iam_instance_profile = var.instance_profile_name
   key_name = data.aws_key_pair.manual_key_pair.key_name
   user_data = var.user_data
   user_data_replace_on_change = true
 
-  tags = {
-      Name = var.name
-    }
+  tags = var.tags
 }

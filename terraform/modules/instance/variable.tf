@@ -2,10 +2,6 @@ variable "public_subnet_id" {
   description = "Subnet ID where NAT Gateway will be launched (must be public)"
   type        = string
 }
-variable "name" {
-  description = "Name tag for the EC2 instance"
-  type        = string
-}
 
 variable "instance_type" {
   description = "EC2 instance type"
@@ -41,5 +37,10 @@ variable "security_group_id" {
 
 variable "user_data" {
   description = "User data script to run on instance launch"
+  type        = string
+}
+
+variable "instance_profile_name" {
+  description = "IAM instance profile name to attach to the EC2 instance"
   type        = string
 }

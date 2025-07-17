@@ -27,11 +27,10 @@ variable "gateway_id" {
   type        = string
   default     = null
 }
-
-variable "nat_gateway_id" {
-  description = "ID of the NAT Gateway"
-  type        = string
-  default     = null
+variable "tags" {
+  description = "A map of tags to add to the route table"
+  type        = map(string)
+  default     = {}
 }
 
 variable "subnet_ids" {

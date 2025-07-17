@@ -1,9 +1,9 @@
 output "subnet_ids" {
   description = "Map of subnet names to subnet IDs"
-  value = { for subnet in aws_subnet.test_subnet : subnet.tags["Name"] => subnet.id }
+  value       = { for k, v in aws_subnet.dev_subnet : k => v.id }
 }
 
-output "subnets" {
-  description = "List of subnet objects"
-  value = var.subnets
+output "subnet_arns" {
+  description = "Map of subnet names to subnet ARNs"
+  value       = { for k, v in aws_subnet.dev_subnet : k => v.arn }
 }

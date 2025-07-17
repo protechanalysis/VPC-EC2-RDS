@@ -24,8 +24,5 @@ resource "aws_security_group" "bastion_sg" {
       description = egress.value.description
     }
   }
-
-  tags = {
-    Name = var.name
-  }
+  tags = var.tags
 }

@@ -18,17 +18,16 @@ variable "instance_class" {
   type        = string
   default     = "db.t3.micro"
 }
-# variable "username" {
-#   description = "The username for the master DB user."
-#   type        = string
-#   default     = random_string.username.result
-# }
-# variable "password" {
-#   description = "The password for the master DB user."
-#   type        = string
-#   default = random_password.password.result
-#   sensitive   = true
-# }
+
+variable "username" {
+  description = "The username for the master DB user."
+  type        = string
+}
+variable "password" {
+  description = "The password for the master DB user."
+  type        = string
+  sensitive   = true
+}
 
 variable "parameter_group" {
   description = "The name of the DB parameter group to associate with this DB instance."
@@ -60,9 +59,10 @@ variable "publicly_accessible" {
   default     = true
 }
 
-variable "name" {
-  description = "The name of the RDS instance."
-  type        = string
+variable "tags" {
+  description = "The tag for RDS instance."
+  type        = map(string)
+  default     = {}
 }
 
 variable "allocated_storage" {
@@ -70,3 +70,4 @@ variable "allocated_storage" {
   type        = number
   default     = 10
 }
+

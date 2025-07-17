@@ -5,32 +5,36 @@ set -euxo pipefail
 exec > >(tee -a /var/log/bootstrap.log)
 exec 2>&1
 
-echo "=== Bootstrap script started at $(date) ==="
+echo "Bootstrap script started at $(date)"
 
-# Debug: Show what variables were passed
-echo "Debug: Template variables received:"
-echo "  db_host: ${db_host}"
-echo "  db_user: ${db_user}"
-echo "  db_name: ${db_name}"
-echo "  db_pass: [REDACTED]"
-
-# Extract hostname without port if it contains :3306
-DB_HOST_CLEAN=$(echo "${db_host}" | cut -d':' -f1)
-echo "  db_host_clean: ${DB_HOST_CLEAN}"
-
-# Update system and install required packages
+# Install AWS CLI and other required packages
 echo "Updating system packages..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y || { echo "System update failed"; exit 1; }
 
 echo "Installing required packages..."
-# Ubuntu packages: apache2, php, php-mysql, mysql-client
-apt-get install -y apache2 php php-mysql mysql-client || { echo "Package installation failed"; exit 1; }
+apt-get install -y apache2 php php-mysql mysql-client awscli jq || { echo "Package installation failed"; exit 1; }
 
 # Enable and start Apache
 echo "Configuring Apache..."
 systemctl enable apache2 || { echo "Failed to enable apache2"; exit 1; }
 systemctl start apache2 || { echo "Failed to start apache2"; exit 1; }
+
+# Get AWS region from instance metadata
+REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+
+# Fetch database credentials from SSM Parameter Store
+echo "Fetching database credentials from SSM..."
+DB_HOST=$(aws ssm get-parameter --name "db_host" --region $REGION --with-decryption --query "Parameter.Value" --output text)
+DB_USER=$(aws ssm get-parameter --name "db_username" --region $REGION --with-decryption --query "Parameter.Value" --output text)
+DB_PASS=$(aws ssm get-parameter --name "db_password" --region $REGION --with-decryption --query "Parameter.Value" --output text)
+DB_NAME=$(aws ssm get-parameter --name "db_name" --region $REGION --with-decryption --query "Parameter.Value" --output text)
+
+# Verify we got all parameters
+if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASS" ] || [ -z "$DB_NAME" ]; then
+    echo "ERROR: Failed to retrieve one or more database parameters from SSM"
+    exit 1
+fi
 
 # Create inc directory and DB config
 echo "Setting up database configuration..."
@@ -38,10 +42,10 @@ mkdir -p /var/www/inc
 
 cat <<EOF > /var/www/inc/dbinfo.inc
 <?php
-define('DB_SERVER', '${DB_HOST_CLEAN}');
-define('DB_USERNAME', '${db_user}');
-define('DB_PASSWORD', '${db_pass}');
-define('DB_DATABASE', '${db_name}');
+define('DB_SERVER', '$DB_HOST');
+define('DB_USERNAME', '$DB_USER');
+define('DB_PASSWORD', '$DB_PASS');
+define('DB_DATABASE', '$DB_NAME');
 ?>
 EOF
 
@@ -55,7 +59,7 @@ DB_READY=false
 for i in {1..60}; do
     echo "Database connection attempt $i/60..."
     # Ubuntu uses mysql command with proper hostname and port separation
-    if mysql -h "${DB_HOST_CLEAN}" -P 3306 -u "${db_user}" -p"${db_pass}" -e "SELECT 1;" 2>/dev/null; then
+    if mysql -h "${DB_HOST}" -P 3306 -u "${DB_USER}" -p"${DB_PASS}" -e "SELECT 1;" 2>/dev/null; then
         echo "Database connection successful!"
         DB_READY=true
         break
@@ -67,20 +71,19 @@ done
 if [ "$DB_READY" = false ]; then
     echo "ERROR: Database connection failed after 60 attempts (10 minutes)"
     echo "Debug info:"
-    echo "  DB_HOST: ${db_host}"
-    echo "  DB_HOST_CLEAN: ${DB_HOST_CLEAN}"
-    echo "  DB_USER: ${db_user}"
-    echo "  DB_NAME: ${db_name}"
+    echo "  DB_HOST: ${DB_HOST}"
+    echo "  DB_USER: ${DB_USER}"
+    echo "  DB_NAME: ${DB_NAME}"
     # Try to test connectivity to the host
     echo "Testing network connectivity to database host..."
-    if ping -c 3 "${DB_HOST_CLEAN}" 2>/dev/null; then
+    if ping -c 3 "${DB_HOST}" 2>/dev/null; then
         echo "  Host is reachable via ping"
     else
         echo "  Host is NOT reachable via ping"
     fi
     
     # Try to test port connectivity
-    if timeout 10 bash -c "</dev/tcp/${DB_HOST_CLEAN}/3306" 2>/dev/null; then
+    if timeout 10 bash -c "</dev/tcp/${DB_HOST}/3306" 2>/dev/null; then
         echo "  Port 3306 is open"
     else
         echo "  Port 3306 is NOT accessible"
@@ -93,16 +96,16 @@ fi
 if [ "$DB_READY" = true ]; then
     echo "Setting up database and tables..."
     # Ubuntu uses mysql command with proper hostname and port separation
-    mysql -h "${DB_HOST_CLEAN}" -P 3306 -u "${db_user}" -p"${db_pass}" <<MYSQL_SCRIPT
-CREATE DATABASE IF NOT EXISTS ${db_name};
-USE ${db_name};
+    mysql -h "${DB_HOST}" -P 3306 -u "${DB_USER}" -p"${DB_PASS}" <<MYSQL_SCRIPT
+CREATE DATABASE IF NOT EXISTS ${DB_NAME};
+USE ${DB_NAME};
 CREATE TABLE IF NOT EXISTS EMPLOYEES (
   ID int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   NAME VARCHAR(45),
   AGE INTEGER(3),
   CITY VARCHAR(45)
 );
-INSERT INTO EMPLOYEES (NAME, AGE, CITY) VALUES ('Terraform Bootstrap', 0, 'Automation');
+
 MYSQL_SCRIPT
     echo "Database setup completed successfully!"
 else
@@ -115,7 +118,7 @@ cat <<'EOF' > /var/www/html/corp.php
 <?php include "../inc/dbinfo.inc"; ?>
 <html>
 <body>
-<h1> Welcome to my project website !</h1>
+<h1> Welcome to my project website database !</h1>
 <?php
   $connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
   if (mysqli_connect_errno()) echo "Failed to connect to MySQL: " . mysqli_connect_error();
@@ -214,10 +217,10 @@ cat <<EOF > /var/www/html/index.html
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bastion Server</title>
+    <title>Web_database Server</title>
 </head>
 <body>
-    <h1>Bastion Server is Running!</h1>
+    <h1>Web_database Server is Running!</h1>
     <p>Bootstrap completed at: $(date)</p>
     <p><a href="corp.php">Go to Employee Database</a></p>
 </body>
@@ -233,9 +236,5 @@ echo "Web files created:"
 ls -la /var/www/html/
 ls -la /var/www/inc/
 
-echo "Testing web server locally:"
-curl -I http://localhost/ || echo "Local web test failed"
-
 echo "=== Bootstrap script completed at $(date) ==="
 echo "Check logs with: sudo cat /var/log/bootstrap.log"
-echo "Access your app at: http://YOUR_PUBLIC_IP/"

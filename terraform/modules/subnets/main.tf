@@ -1,5 +1,5 @@
-resource "aws_subnet" "test_subnet" {
-  for_each = { for idx, subnet in var.subnets : idx => subnet }
+resource "aws_subnet" "dev_subnet" {
+  for_each = { for subnet in var.subnets : subnet.name => subnet }
 
   vpc_id            = var.vpc_id
   cidr_block        = each.value.cidr
@@ -7,7 +7,7 @@ resource "aws_subnet" "test_subnet" {
 
   map_public_ip_on_launch = var.map_public_ip_on_launch
 
-  tags = {
-    Name = each.value.name
-  }
+  tags = merge(var.tags, {
+    Name = "${each.value.name}"
+  })
 }
