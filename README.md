@@ -11,26 +11,18 @@ This folder contains the Terraform code for provisioning a secure, highly-availa
 
 
 ## Structure
+### scripts/
+- **bootstrap.sh**: Contains webserser instance user data to run at the launch of the instance.
 
 ### terraform/
 - **main.tf**: Orchestrates the infrastructure by calling modules for VPC, subnets, route tables, security groups, EC2, and RDS.
 - **provider.tf**: Configures the AWS provider and required provider versions.
 - **backend_s3.tf**: Configures remote state storage in an S3 bucket for collaboration and state locking.
 - **output.tf**: Exposes key outputs such as VPC ID, subnet IDs, route table IDs, EC2 instance ID, and security group IDs.
-- **terraform.tfvars**: Supplies actual values for input variables (e.g., environment name, DB engine, credentials).
+- **terraform.auto.tfvars**: Supplies actual values for input variables (e.g., environment name, DB engine, credentials).
 - **variable**: Declares all input variables used across modules.
 - **local.tf**: Defines local values used for cleaner expressions and consistent naming conventions.
-- **modules/**: Contains reusable modules for each infrastructure component:
-  - **vpc/**: Provisions a VPC with configurable CIDR, DNS support, and tags.
-  - **subnets/**: Creates public/private subnets in specified AZs, with options for public IP mapping.
-  - **internet_gateway/**: Attaches an Internet Gateway to the VPC.
-  - **routes_tables/**: Manages route tables and associations for public/private subnets.
-  - **instance/**: Deploys an EC2 instance (webserver host) in a public subnet, using the latest Ubuntu AMI and a specified key pair.
-  - **rds/**: Provisions an RDS instance with secure credentials stored in AWS SSM Parameter Store, and a DB subnet group.
-  - **public_security_group/** & **private_security_group/**: Creates security groups with dynamic ingress/egress rules for public/private resources.
-  - **object_storage**: Provisions an encrypted S3 bucket with versioning and lifecycle rules for VPC Flow Logs.
-  - **role**: Creates an IAM role and instance profile to allow EC2 access to SSM parameters.
-  - **ssm_parameters**: Generates random DB credentials and stores them, along with DB config, in SSM Parameter Store.
+- **source modules**: Contains reusable predefined modules for each infrastructure component from a github repo
 
 ## Module Details
 

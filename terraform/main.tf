@@ -1,5 +1,5 @@
 module "object_storage" {
-  source      = "./modules/s3"
+  source      = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/s3_bucket/vpc_flow_log_s3?ref=v1.0.0"
   bucket_name = local.bucket
   tags = merge(local.s3_tags, {
     Name = "${local.name}-s3-bucket"
@@ -7,7 +7,7 @@ module "object_storage" {
 }
 
 module "vpc" {
-  source          = "./modules/vpc"
+  source          = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/vpc?ref=v1.0.0"
   name            = "${local.name}-vpc"
   cidr_block      = "10.0.0.0/16"
   log_destination = module.object_storage.vpc_flow_logs_bucket_arn
@@ -15,7 +15,7 @@ module "vpc" {
 }
 
 module "public_subnet" {
-  source                  = "./modules/subnets"
+  source                  = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/subnets?ref=v1.0.0"
   vpc_id                  = module.vpc.vpc_id
   map_public_ip_on_launch = true
   subnets                 = local.public_subnets
@@ -25,7 +25,7 @@ module "public_subnet" {
 }
 
 module "private_subnet" {
-  source                  = "./modules/subnets"
+  source                  = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/subnets?ref=v1.0.0"
   vpc_id                  = module.vpc.vpc_id
   map_public_ip_on_launch = false
   subnets                 = local.private_subnets
@@ -35,7 +35,7 @@ module "private_subnet" {
 }
 
 module "igw" {
-  source = "./modules/internet_gateway"
+  source = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/internet_gateway?ref=v1.0.0"
   vpc_id = module.vpc.vpc_id
   tags = merge(local.common_tags, {
     Name = "${local.name}-vpc-igw"
@@ -44,7 +44,7 @@ module "igw" {
 }
 
 module "public_route_table" {
-  source     = "./modules/routes_tables"
+  source     = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/routes_tables?ref=v1.0.0"
   vpc_id     = module.vpc.vpc_id
   name       = "public-rt"
   type       = "public"
@@ -58,7 +58,7 @@ module "public_route_table" {
 }
 
 module "public_security_group" {
-  source      = "./modules/security_group"
+  source      = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/security_group?ref=v1.0.0"
   name        = "${local.name}-sg"
   description = "Security group for bastion host"
   vpc_id      = module.vpc.vpc_id
@@ -94,10 +94,9 @@ module "public_security_group" {
 }
 
 module "private_security_group" {
-  source = "./modules/security_group"
+  source = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/security_group?ref=v1.0.0"
   name   = "${local.name}-private-sg"
   vpc_id = module.vpc.vpc_id
-
   ingress_rules = [
     {
       from_port   = 3306
@@ -123,7 +122,7 @@ module "private_security_group" {
 
 
 module "rds" {
-  source                 = "./modules/rds"
+  source                 = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/rds?ref=v1.0.0"
   database_name          = "${local.name}_db"
   password               = module.ssm_parameters.password
   username               = module.ssm_parameters.username
@@ -138,19 +137,19 @@ module "rds" {
 }
 
 module "ssm_parameters" {
-  source  = "./modules/ssm_parameters"
+  source  = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/ssm_parameters?ref=v1.0.0"
   db_host = split(":", module.rds.rds_endpoint)[0]
   db_name = module.rds.database_name
 }
 
 module "role" {
-  source = "./modules/iam_role"
+  source = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/iam_role/ssm_ec2/?ref=v1.0.0"
   name   = "${local.name}-ec2-ssm-role"
   tags   = local.ec2_tags
 }
 
 module "ec2_instance" {
-  source                  = "./modules/instance"
+  source                  = "git::https://github.com/protechanalysis/terraform-aws-module.git//aws_modules/instance?ref=v1.0.0"
   instance_type           = "t3.micro"
   vpc_id                  = module.vpc.vpc_id
   public_subnet_id        = module.public_subnet.subnet_ids["public-1"]
@@ -158,7 +157,7 @@ module "ec2_instance" {
   key_pair                = local.key_name
   security_group_id       = [module.public_security_group.id]
   ssh_allowed_cidr_blocks = [local.allowed_cidr_blocks]
-  user_data               = file("${path.module}/modules/instance/scripts/bootstraps.sh")
+  user_data               = file("../scripts/bootstraps.sh")
   depends_on              = [module.rds, module.public_security_group, module.object_storage]
   tags = merge(local.ec2_tags, {
     Name = "${local.name}-instance"
